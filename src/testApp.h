@@ -54,6 +54,6 @@ class testApp : public ofBaseApp{
     
     //ofSoundStream soundStream;
     //void audioOut(float * input, int bufferSize, int nChannels);
-    
+    ofImage sheepImg;
     int sampleCount;
 };

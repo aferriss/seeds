@@ -7,10 +7,10 @@ float g3 = 150;
 
 //--------------------------------------------------------------
 void testApp::setup(){
-    w = 1200;
-    h = 600;
+    w = 866;
+    h = 900;
     
-    ofSeedRandom(1000);
+    //ofSeedRandom(1000);
     
     inc = 0.000001;
     
@@ -21,6 +21,8 @@ void testApp::setup(){
     noiseShader.load("noise");
     reposShader.load("repos");
     emboss.load("emboss");
+    
+    sheepImg.loadImage("bighornsheep1.jpg");
     
     finishIt = false;
     numRandSeeds = 1;
@@ -220,7 +222,7 @@ void testApp::draw(){
     }
     
     
-    if(step%5000 == true){
+    if(step%1000 == true){
         numRandSeeds = int(ofRandom(5));
         //for(int i=0; i<numRandSeeds; i++){
             int seed = (int)ofRandom(w*h);
@@ -333,6 +335,7 @@ void testApp::draw(){
     reposFbo.begin();
         reposShader.begin();
         reposShader.setUniformTexture("tex0", screen.getTextureReference(), 0);
+        reposShader.setUniformTexture("tex1", sheepImg.getTextureReference(), 1);
         reposShader.setUniform2f("params", ofMap(ofGetMouseX(),0,800,-2,2), ofMap(ofGetMouseY(),0,800,0.5,50) );
         reposShader.setUniform2f("res", w, h);
     
@@ -348,7 +351,7 @@ void testApp::draw(){
         g3--;
     //}
     
-
+    //screen.draw(0,0);
 }
 
 //--------------------------------------------------------------
@@ -362,6 +365,8 @@ void testApp::updateSeeds(){
     float xOff = 0.0;
     float zOff = 0.0;
     float yOff = 0.0;
+    
+    /*
     float inc  = 0;
     float z = 0;
     z+=0.5;
@@ -369,10 +374,10 @@ void testApp::updateSeeds(){
         z = 0;
     }
     inc+=0.0000000000000005;
-
+     */
     
     auto pixPtr = screen.getPixels();
-    
+    auto sheepPtr = sheepImg.getPixels();
     
     for(int i = seeds.size()-1; i>=0; i--){
         //float yOff = ofGetElapsedTimef()*0.4;
@@ -387,9 +392,9 @@ void testApp::updateSeeds(){
         //float g = 255-ofSignedNoise(xOff,yOff,zOff,ofGetElapsedTimef()/30)*512; //green
         //float b = 255-ofSignedNoise(yOff,zOff,yOff,ofGetElapsedTimef()/30)*512; //blue
         
-        float r2 = ofMap((noise->noise(xOff)),0,1,0,255);
-        //float g2 = ofMap((noise->noise(yOff)),0,1,0,255);
-        //float b2 = ofMap((noise->noise(zOff)),0,1,0,255);//(noise->noise(zOff));
+        float r2 = ofMap((noise->noise(xOff, yOff)),0,1,0,255);
+        float g2 = ofMap((noise->noise(yOff)),0,1,0,255);
+        float b2 = ofMap((noise->noise(zOff)),0,1,0,255);//(noise->noise(zOff));
         
         float briMod = r2;
         briMod = int(ofMap(briMod,0,255,0,3));
@@ -453,32 +458,33 @@ void testApp::updateSeeds(){
         
         //screen.setColor(x, y, c);
         int loc = (y*w+ x)*3;
-        pixPtr[loc] = r2;
-        pixPtr[loc+1] = r2;
-        pixPtr[loc+2] = r2;
+        pixPtr[loc] = r2;//sheepPtr[loc] * (r2*0.025);
+        pixPtr[loc+1] = r2;//sheepPtr[loc] * (r2*0.025);
+        pixPtr[loc+2] = r2;//sheepPtr[loc] * (r2*0.025);
         //screen.setFromPixels(pixPtr, w, h, OF_IMAGE_COLOR);
         //screen.setFromPixels();
         
         
         //cout<<ofToString(c)<<endl;
+        briMod = int(ofRandom(0,2));
         
         //---------Up, Right, Down, Left
-        int upIndex = seeds[i] - w +briMod;// (int)ofMap(ofNoise(xOff,yOff),0,1,0,int(ofRandom(2)));
-        int rightIndex = seeds[i] +1 -briMod;// (int)ofMap(ofNoise(xOff,yOff),0,1,0,int(ofRandom(2)));
-        int downIndex = seeds[i] + w -briMod;// (int)ofMap(ofNoise(xOff,yOff),0,1,0,int(ofRandom(2)));
-        int leftIndex = seeds[i] - 1 +briMod;// (int)ofMap(ofNoise(xOff,yOff),0,1,0,int(ofRandom(2)));
+        int upIndex = seeds[i] - w + briMod;// (int)ofMap(ofNoise(xOff,yOff),0,1,0,int(ofRandom(2)));
+        int rightIndex = seeds[i] + 1 - briMod;// (int)ofMap(ofNoise(xOff,yOff),0,1,0,int(ofRandom(2)));
+        int downIndex = seeds[i] + w - 0;// (int)ofMap(ofNoise(xOff,yOff),0,1,0,int(ofRandom(2)));
+        int leftIndex = seeds[i] - 1 + briMod;// (int)ofMap(ofNoise(xOff,yOff),0,1,0,int(ofRandom(2)));
         
         //ofSetColor(c);
         
         //ofRect(0, 0, 100, 100);
-        inc+=0.001;
+        //inc+=0.001;
         
-        if(y>0 && !traversed[upIndex]){
+        if(y>i && !traversed[upIndex]){
             seeds.push_back(upIndex);
             traversed[upIndex] = true;
         }
         
-        if(x < w-1 && !traversed[rightIndex]){
+        if(x < w-1-i && !traversed[rightIndex]){
             seeds.push_back(rightIndex);
             traversed[rightIndex] = true;
         }
@@ -488,7 +494,7 @@ void testApp::updateSeeds(){
             traversed[downIndex] = true;
         }
         
-        if(x > 0 && !traversed[leftIndex]){
+        if(x > i && !traversed[leftIndex]){
             seeds.push_back(leftIndex);
             traversed[leftIndex] = true;
         }
@@ -524,9 +530,9 @@ void testApp::updateSeeds(){
 
         seeds.erase(seeds.begin()+i);
         
-        xOff+=0.002;
+        xOff+=0.001;
         yOff+=0.002;
-        zOff+=0.002;
+        zOff+=0.003;
         
         
         
